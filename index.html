@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocabulary Quiz</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 40px; background-color: #fafafa; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
+        h2 { color: #333; }
+        .divider { width: 100%; height: 2px; background-color: #ddd; margin: 20px 0; }
+        .word-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+        .word-item { padding: 8px; border: 1px solid #ccc; border-radius: 4px; background: #f9f9f9; cursor: pointer; }
+        .word-item:hover { background: #eef; }
+        button { margin: 5px; padding: 10px 15px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; background: #007BFF; color: white; }
+        button:hover { background-color: #0056b3; }
+        .option-btn { margin: 5px; display: inline-block; width: 30%; } /* 並排顯示 */
+        #feedback { font-size: 1.2em; margin-top: 10px; font-weight: bold; }
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+        .shake { animation: shake 0.5s; }
+        @media (max-width: 600px) {
+            .word-grid { grid-template-columns: repeat(3, 1fr); }
+            .option-btn { width: 100%; display: block; } /* 移動端改為垂直排列 */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Vocab and Pronounce</h2> <!-- 修改 A 區名稱 -->
+        <button id="toggle-button">中</button>
+        <div class="word-grid" id="wordList"></div>
+        <div class="divider"></div>
+        <h2>Quiz</h2> <!-- 修改 B 區名稱 -->
+        <p id="quiz-question"></p>
+        <div id="quiz-options"></div>
+        <p id="feedback"></p>
+    </div>
+
+    <script>
+        // A 區單字數據
+        const wordsData = [
+            { en: "accessing", zh: "訪問" }, { en: "awareness", zh: "意識" },
+            { en: "consideration", zh: "考慮" }, { en: "consented", zh: "同意" },
+            { en: "contributes", zh: "貢獻" }, { en: "decoding", zh: "解碼" },
+            { en: "demonstrate", zh: "展示" }, { en: "discrimination", zh: "歧視" },
+            { en: "ethical", zh: "倫理的" }, { en: "illustrate", zh: "說明" },
+            { en: "infer", zh: "推斷" }, { en: "inherently", zh: "固有地" },
+            { en: "interactions", zh: "互動" }, { en: "investigative", zh: "調查的" },
+            { en: "journalistic", zh: "新聞的" }, { en: "neuroscience", zh: "神經科學" },
+            { en: "objective", zh: "客觀的" }, { en: "occurring", zh: "發生" },
+            { en: "privacy", zh: "隱私" }, { en: "reconstructed", zh: "重建" },
+            { en: "recreate", zh: "再創造" }, { en: "scenario", zh: "情境" },
+            { en: "secure", zh: "安全的" }, { en: "sequence", zh: "順序" },
+            { en: "significant", zh: "重要的" }, { en: "specific", zh: "具體的" },
+            { en: "variants", zh: "變體" }, { en: "violated", zh: "違反" },
+            { en: "arbitrarily", zh: "任意地" }, { en: "obviously", zh: "明顯地" }
+        ];
+
+        // B 區測驗題庫
+        const quizData = [
+            { question: "The researcher is ___ a vast database for the study.", options: ["accessing", "awareness", "consideration"], answer: "accessing" },
+            { question: "The professor emphasized the importance of gaining ___ of ethical issues in journalism.", options: ["accessing", "awareness", "consideration"], answer: "awareness" },
+            { question: "Before making a decision, the committee gave thorough ___ to all proposals.", options: ["accessing", "awareness", "consideration"], answer: "consideration" },
+            { question: "The patient ___ to the surgery after understanding the risks.", options: ["consented", "contributes", "decoding"], answer: "consented" },
+            { question: "This research study ___ to the growing field of neuroscience.", options: ["consented", "contributes", "decoding"], answer: "contributes" },
+            { question: "Scientists are ___ complex brain signals to understand human cognition.", options: ["consented", "contributes", "decoding"], answer: "decoding" },
+            { question: "The study aims to ___ the effects of climate change on marine life.", options: ["demonstrate", "discrimination", "ethical"], answer: "demonstrate" },
+            { question: "Gender ___ in the workplace remains a significant issue.", options: ["demonstrate", "discrimination", "ethical"], answer: "discrimination" },
+            { question: "The company faced an ___ dilemma when handling user data.", options: ["demonstrate", "discrimination", "ethical"], answer: "ethical" },
+            { question: "The textbook includes graphs to ___ the concept of gravity.", options: ["illustrate", "infer", "inherently"], answer: "illustrate" },
+            { question: "From the given data, we can ___ that the market is growing.", options: ["illustrate", "infer", "inherently"], answer: "infer" },
+            { question: "Some human behaviors are ___ linked to genetic traits.", options: ["illustrate", "infer", "inherently"], answer: "inherently" },
+            { question: "Frequent ___ between parents and teachers benefit students.", options: ["interactions", "investigative", "journalistic"], answer: "interactions" },
+            { question: "She was assigned an ___ task to uncover corruption.", options: ["interactions", "investigative", "journalistic"], answer: "investigative" },
+            { question: "His ___ skills helped him uncover the truth behind the scandal.", options: ["interactions", "investigative", "journalistic"], answer: "journalistic" },
+            { question: "Advances in ___ have led to better treatments for brain disorders.", options: ["neuroscience", "objective", "occurring"], answer: "neuroscience" },
+            { question: "It is important to remain ___ when analyzing scientific data.", options: ["neuroscience", "objective", "occurring"], answer: "objective" },
+            { question: "A rare phenomenon is ___ in the sky tonight.", options: ["neuroscience", "objective", "occurring"], answer: "occurring" },
+            { question: "Users worry about their online ___ being compromised.", options: ["privacy", "reconstructed", "recreate"], answer: "privacy" },
+            { question: "The archaeologist ___ the ancient structure based on findings.", options: ["privacy", "reconstructed", "recreate"], answer: "reconstructed" },
+            { question: "The artist tried to ___ the lost masterpiece.", options: ["privacy", "reconstructed", "recreate"], answer: "recreate" },
+            { question: "The emergency drill simulated a real-life ___ of an earthquake.", options: ["scenario", "secure", "sequence"], answer: "scenario" },
+            { question: "Please ___ your password to protect your data.", options: ["scenario", "secure", "sequence"], answer: "secure" },
+            { question: "The DNA test revealed a unique genetic ___.", options: ["scenario", "secure", "sequence"], answer: "sequence" },
+            { question: "This study presents ___ findings in cancer research.", options: ["significant", "specific", "variants"], answer: "significant" },
+            { question: "The doctor provided ___ instructions for post-surgery care.", options: ["significant", "specific", "variants"], answer: "specific" },
+            { question: "There are multiple ___ of the virus in different regions.", options: ["significant", "specific", "variants"], answer: "variants" },
+            { question: "His rights were ___ when the company used his data without consent.", options: ["violated", "arbitrarily", "obviously"], answer: "violated" },
+            { question: "The government cannot ___ impose restrictions without justification.", options: ["violated", "arbitrarily", "obviously"], answer: "arbitrarily" },
+            { question: "She was ___ upset about the unfair decision.", options: ["violated", "arbitrarily", "obviously"], answer: "obviously" }
+        ];
+
+        let showTranslation = false;
+        let isSpeaking = false;
+
+        // 渲染 A 區單字列表
+        function renderWordList(showTranslation = false) {
+            const container = document.getElementById("wordList");
+            container.innerHTML = "";
+            wordsData.forEach(item => {
+                let div = document.createElement("div");
+                div.className = "word-item";
+                div.innerText = showTranslation ? item.zh : item.en;
+                div.onclick = () => speak(item.en);
+                container.appendChild(div);
+            });
+        }
+
+        // 單字發音功能
+        function speak(word) {
+            if (isSpeaking) return;
+            isSpeaking = true;
+            let utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = "en-US";
+            utterance.onend = () => { isSpeaking = false; };
+            speechSynthesis.speak(utterance);
+        }
+
+        // 切換 A 區單字顯示
+        document.getElementById("toggle-button").addEventListener("click", () => {
+            showTranslation = !showTranslation;
+            renderWordList(showTranslation);
+        });
+
+        // 初始化 A 區單字列表
+        renderWordList();
+
+        // 生成 B 區測驗題目
+        function generateQuiz() {
+            const randomIndex = Math.floor(Math.random() * quizData.length);
+            const questionData = quizData[randomIndex];
+            document.getElementById("quiz-question").innerText = questionData.question;
+            const optionsDiv = document.getElementById("quiz-options");
+            optionsDiv.innerHTML = "";
+
+            const labels = ["(A)", "(B)", "(C)"]; // 選項標記
+            questionData.options.forEach((option, index) => {
+                let btn = document.createElement("button");
+                btn.className = "option-btn";
+                btn.innerText = `${labels[index]} ${option}`; // 加入標記
+                btn.onclick = () => checkAnswer(option, questionData.answer);
+                optionsDiv.appendChild(btn);
+            });
+        }
+
+        // 檢查答案
+        function checkAnswer(selected, correct) {
+            const feedback = document.getElementById("feedback");
+            const buttons = document.querySelectorAll(".option-btn");
+            buttons.forEach(btn => btn.disabled = true); // 禁用所有按鈕
+
+            if (selected === correct) {
+                feedback.innerText = "✅ Correct!";
+                feedback.style.color = "green";
+                setTimeout(() => {
+                    buttons.forEach(btn => btn.disabled = false); // 重新啟用按鈕
+                    generateQuiz();
+                }, 800);
+            } else {
+                feedback.innerText = "❌ Wrong! Try again.";
+                feedback.style.color = "red";
+                document.getElementById("quiz-options").classList.add("shake");
+                setTimeout(() => {
+                    document.getElementById("quiz-options").classList.remove("shake");
+                    buttons.forEach(btn => btn.disabled = false); // 重新啟用按鈕
+                }, 500);
+            }
+        }
+
+        // 初始化 B 區測驗
+        generateQuiz();
+    </script>
+</body>
+</html>
