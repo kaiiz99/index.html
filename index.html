@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocabulary Quiz</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 40px; background-color: #fafafa; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
+        h2 { color: #333; display: flex; justify-content: space-between; align-items: center; }
+        .divider { width: 100%; height: 2px; background-color: #ddd; margin: 20px 0; }
+        .word-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+        .word-item { padding: 8px; border: 1px solid #ccc; border-radius: 4px; background: #f9f9f9; cursor: pointer; } /* 恢復原始顏色 */
+        .word-item:hover { background: #eef; }
+        button { margin: 5px; padding: 10px 15px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; background: #007BFF; color: white; }
+        button:hover { background-color: #0056b3; }
+        .option-btn { margin: 5px; display: inline-block; width: 30%; }
+        #feedback { font-size: 1.2em; margin-top: 10px; font-weight: bold; }
+        #progress { font-size: 1.2em; margin-top: 10px; }
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+        .shake { animation: shake 0.5s; }
+        @media (max-width: 600px) {
+            .word-grid { grid-template-columns: repeat(3, 1fr); }
+            .option-btn { width: 100%; display: block; }
+        }
+        #toggle-button { font-size: 0.8em; padding: 5px 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Vocab and Pronounce <button id="toggle-button">中</button></h2>
+        <div class="word-grid" id="wordList"></div>
+        <div class="divider"></div>
+        <h2>Quiz</h2>
+        <p id="quiz-question"></p>
+        <div id="quiz-options"></div>
+        <p id="feedback"></p>
+        <p id="progress">Progress: 0/10</p>
+    </div>
+
+    <script>
+        // A 區單字數據
+        const wordsData = [
+            { en: "aspects", zh: "方面" }, { en: "capacity", zh: "容量/能力" },
+            { en: "commitment", zh: "承諾/投入" }, { en: "complement", zh: "補充/補足" },
+            { en: "consumption", zh: "消費/消耗" }, { en: "correlation", zh: "關聯/相關性" },
+            { en: "generation", zh: "世代/產生" }, { en: "implementation", zh: "執行/實施" },
+            { en: "initiatives", zh: "倡議/主動性" }, { en: "proximity", zh: "接近/鄰近" },
+            { en: "ramifications", zh: "後果/影響" }, { en: "route", zh: "路線/途徑" },
+            { en: "substitute", zh: "替代品" }, { en: "upgrade", zh: "升級/改進" },
+            { en: "visionary", zh: "有遠見的人/願景" }, { en: "concentrate", zh: "集中" },
+            { en: "functioning", zh: "運作/運行" }, { en: "accessible", zh: "可獲得的/可進入的" },
+            { en: "beneficial", zh: "有益的" }, { en: "compatible", zh: "兼容的/適合的" },
+            { en: "conceivable", zh: "可想像的/可能的" }, { en: "conventional", zh: "傳統的/常規的" },
+            { en: "crucial", zh: "關鍵的/重要的" }, { en: "empirical", zh: "經驗的/實證的" },
+            { en: "exterior", zh: "外部的/外觀的" }, { en: "focused", zh: "專注的/集中的" },
+            { en: "marginal", zh: "邊緣的/微小的" }, { en: "sustainable", zh: "可持續的" },
+            { en: "enormously", zh: "極大地" }, { en: "holistically", zh: "整體地/全面地" }
+        ];
+
+        // B 區測驗題庫 (已更新)
+        const quizData = [
+            { question: "The project has many ___ that need careful consideration.", options: ["aspects", "substitutes", "upgrades"], answer: "aspects" },
+            { question: "The report analyzes the problem from a multi-___ perspective.", options: ["aspects", "aspectual", "aspects"], answer: "aspectual" },
+            { question: "The stadium has a seating ___ of 50,000 people.", options: ["capacity", "consumption", "vision"], answer: "capacity" },
+            { question: "She is highly ___ and learns new skills quickly.", options: ["capable", "capacious", "capacity"], answer: "capable" },
+            { question: "She showed great ___ to improving her skills.", options: ["complement", "commitment", "marginal"], answer: "commitment" },
+            { question: "He is fully ___ to his work.", options: ["committing", "commitment", "committed"], answer: "committed" },
+            { question: "This wine is a perfect ___ to the meal.", options: ["functioning", "upgrade", "complement"], answer: "complement" },
+            { question: "The two teammates work in a highly ___ manner.", options: ["complementing", "complementary", "complements"], answer: "complementary" },
+            { question: "The country’s energy ___ has increased rapidly.", options: ["consumption", "initiatives", "aspects"], answer: "consumption" },
+            { question: "This car is very fuel-___.", options: ["consume", "consuming", "efficient"], answer: "efficient" },
+            { question: "Studies have shown a strong ___ between exercise and mental health.", options: ["implementation", "correlation", "capacity"], answer: "correlation" },
+            { question: "The two events are highly ___.", options: ["correlated", "correlation", "correlating"], answer: "correlated" },
+            { question: "The younger ___ is more tech-savvy than ever before.", options: ["generation", "function", "substitute"], answer: "generation" },
+            { question: "The company aims to be a leader in renewable energy ___.", options: ["generate", "generating", "generation"], answer: "generation" },
+            { question: "The ___ of the new policy will start next month.", options: ["implementation", "route", "marginal"], answer: "implementation" },
+            { question: "The company is ___ a new security system.", options: ["implement", "implementing", "implemented"], answer: "implementing" },
+            { question: "The company launched new ___ to reduce carbon emissions.", options: ["conventional", "initiatives", "exterior"], answer: "initiatives" },
+            { question: "She is highly ___ and always comes up with new ideas.", options: ["initiator", "initiative", "initiated"], answer: "initiative" },
+            { question: "The hotel’s ___ to the beach makes it a popular choice.", options: ["commitment", "proximity", "function"], answer: "proximity" },
+            { question: "The two houses are ___ located.", options: ["proximate", "proximity", "approximately"], answer: "proximate" },
+            { question: "The decision could have serious ___ for the company.", options: ["substitute", "ramifications", "aspects"], answer: "ramifications" },
+            { question: "We must consider the ___ impact of our choices.", options: ["ramifications", "ramifying", "ramified"], answer: "ramified" },
+            { question: "The fastest ___ to the airport is via the highway.", options: ["route", "focus", "empirical"], answer: "route" },
+            { question: "He carefully ___ his trip to avoid traffic.", options: ["routes", "routed", "routing"], answer: "routed" },
+            { question: "Almond milk is a good ___ for dairy milk.", options: ["complement", "substitute", "commitment"], answer: "substitute" },
+            { question: "This ingredient can be ___ for butter in baking.", options: ["substitute", "substituting", "substituted"], answer: "substituted" },
+            { question: "The company decided to ___ its computer system.", options: ["upgrade", "correlate", "concentrate"], answer: "upgrade" },
+            { question: "My phone needs an ___ to the latest software version.", options: ["upgrade", "function", "accessibility"], answer: "upgrade" },
+            { question: "Steve Jobs was a true ___ in the field of technology.", options: ["marginal", "visionary", "implementation"], answer: "visionary" },
+            { question: "The company’s success is due to its ___ leadership.", options: ["visionaries", "vision", "visionary"], answer: "visionary" },
+            { question: "It is hard to ___ in a noisy environment.", options: ["concentrate", "function", "consume"], answer: "concentrate" },
+            { question: "She has great ___ skills when working under pressure.", options: ["concentration", "concentrating", "concentrated"], answer: "concentration" },
+            { question: "The machine is not ___ properly.", options: ["consuming", "functioning", "upgrading"], answer: "functioning" },
+            { question: "The ___ of the new system is still under testing.", options: ["function", "functioning", "functions"], answer: "functioning" },
+            { question: "This book is easily ___ online.", options: ["empirical", "accessible", "conventional"], answer: "accessible" },
+            { question: "The new law will improve ___ for people with disabilities.", options: ["access", "accessible", "accessing"], answer: "access" },
+            { question: "A balanced diet is ___ for health.", options: ["beneficial", "empirical", "crucial"], answer: "beneficial" },
+            { question: "This plan will ___ both employees and the company.", options: ["benefited", "benefit", "beneficial"], answer: "benefit" },
+            { question: "This software is not ___ with the old system.", options: ["compatible", "marginal", "empirical"], answer: "compatible" },
+            { question: "The two devices work ___ together.", options: ["compatibility", "compatibly", "compatible"], answer: "compatibly" },
+            { question: "It is ___ that life exists on other planets.", options: ["conceivable", "sustainable", "marginal"], answer: "conceivable" },
+            { question: "He answered the question as ___ as possible.", options: ["conceivably", "conceivable", "concept"], answer: "conceivably" },
+            { question: "She prefers ___ medicine over alternative treatments.", options: ["conventional", "holistic", "marginal"], answer: "conventional" },
+            { question: "He behaved quite ___ during the meeting.", options: ["conventional", "conventionally", "convention"], answer: "conventionally" },
+            { question: "This step is ___ for success.", options: ["conventional", "empirical", "crucial"], answer: "crucial" },
+            { question: "The decision was made at a ___ moment.", options: ["crucial", "crucially", "cruciality"], answer: "crucial" }
+        ];
+
+        let showTranslation = false;
+        let isSpeaking = false;
+        let currentQuizSet = [];
+        let currentQuestionIndex = 0;
+        let progress = 0;
+
+        // 完全隨機選取10題
+        function generateQuizSet() {
+            // 使用Fisher-Yates算法進行完全隨機
+            const shuffled = [...quizData];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            currentQuizSet = shuffled.slice(0, 10);
+            currentQuestionIndex = 0;
+            progress = 0;
+            updateProgress();
+            showNextQuestion();
+        }
+
+        // 其他函式保持不變
+        function renderWordList(showTranslation = false) {
+            const container = document.getElementById("wordList");
+            container.innerHTML = "";
+            wordsData.forEach(item => {
+                let div = document.createElement("div");
+                div.className = "word-item";
+                div.innerText = showTranslation ? item.zh : item.en;
+                div.onclick = () => speak(item.en);
+                container.appendChild(div);
+            });
+        }
+
+        function speak(word) {
+            if (isSpeaking) return;
+            isSpeaking = true;
+            let utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = "en-US";
+            utterance.onend = () => { isSpeaking = false; };
+            speechSynthesis.speak(utterance);
+        }
+
+        document.getElementById("toggle-button").addEventListener("click", () => {
+            showTranslation = !showTranslation;
+            renderWordList(showTranslation);
+        });
+
+        function showNextQuestion() {
+            if (currentQuestionIndex >= currentQuizSet.length) {
+                alert("測驗完成！");
+                generateQuizSet();
+                return;
+            }
+            const questionData = currentQuizSet[currentQuestionIndex];
+            document.getElementById("quiz-question").innerText = questionData.question;
+            const optionsDiv = document.getElementById("quiz-options");
+            optionsDiv.innerHTML = "";
+
+            const labels = ["(A)", "(B)", "(C)"];
+            questionData.options.forEach((option, index) => {
+                let btn = document.createElement("button");
+                btn.className = "option-btn";
+                btn.innerText = `${labels[index]} ${option}`;
+                btn.onclick = () => checkAnswer(option, questionData.answer);
+                optionsDiv.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selected, correct) {
+            const feedback = document.getElementById("feedback");
+            const buttons = document.querySelectorAll(".option-btn");
+            buttons.forEach(btn => btn.disabled = true);
+
+            if (selected === correct) {
+                feedback.innerText = "✅ Correct!";
+                feedback.style.color = "green";
+                progress++;
+                updateProgress();
+                currentQuestionIndex++;
+                setTimeout(() => {
+                    buttons.forEach(btn => btn.disabled = false);
+                    showNextQuestion();
+                }, 800);
+            } else {
+                feedback.innerText = "❌ Wrong! Try again.";
+                feedback.style.color = "red";
+                document.getElementById("quiz-options").classList.add("shake");
+                setTimeout(() => {
+                    document.getElementById("quiz-options").classList.remove("shake");
+                    buttons.forEach(btn => btn.disabled = false);
+                    resetQuiz();
+                }, 500);
+            }
+        }
+
+        function updateProgress() {
+            document.getElementById("progress").innerText = `Progress: ${progress}/10`;
+        }
+
+        function resetQuiz() {
+            progress = 0;
+            currentQuestionIndex = 0;
+            updateProgress();
+            showNextQuestion();
+        }
+
+        // 初始化
+        renderWordList();
+        generateQuizSet();
+    </script>
+</body>
+</html>
